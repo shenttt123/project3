@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packages</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 20px 0;
+            color: #333;
+        }
+
+        .shelf {
+            position: relative;
+            width: 80%;
+            height: 350px;
+            background: #a0522d;
+            border-radius: 10px;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 10px 20px;
+        }
+		
+        .box {
+            width: 150px;
+            height: 200px;
+            transition: transform 0.3s ease-in-out;
+            cursor: pointer;
+        }
+
+        .box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .box:hover {
+            transform: scale(1.2);
+        }
+
+        .cards-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 10;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-wrapper {
+            position: absolute;
+            width: 220px; /* Fixed card size */
+            height: 280px; /* Fixed card size */
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: rotateY(180deg); /* Start with the back visible */
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out;
+        }
+
+        .card-inner.flipped {
+            transform: rotateY(0deg); /* Show the front */
+			width: 280px; /* Fixed card size */
+            height: 280px; /* Fixed card size */
+        }
+
+        .card-front,
+        .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-back {
+            background-color: #333;
+            background-image: url('/image/21'); /* Back image */
+            background-size: cover;
+            background-position: center;
+            transform: rotateY(180deg); /* Back is initially visible */
+        }
+
+        .card-back img, .card-front img {
+            width: 100%; /* Match card size */
+            height: 100%; /* Match card size */
+            object-fit: cover;
+            border-radius: 5px;
+        }
+		
+        .hidden {
+            display: none;
+        }
+		.announcement {
+			background-color: #f8f9fa;
+			padding: 10px;
+			border-radius: 4px;
+			margin-bottom: 20px;
+			font-size: 14px;
+			color: #333;
+			border: 1px solid #ddd;
+		}
+
+		.announcement a {
+			color: #007bff;
+			text-decoration: none;
+		}
+    </style>
+</head>
+<body>
+    <h1>Select Your Package</h1>
+	<!-- ANNOUNCEMENT_PLACEHOLDER -->
+    <div class="cards-container" id="cardsContainer" onclick = >
+        
+    </div>
+    <div class="shelf" id="shelf">
+        
+    </div>
+	<h1 id="earnings">
+        Your total money is ${{totalmoney}}
+    </h1>
+	<button onclick="goHome()">Back</button>
+	
+    <script>
+        const cardsToShow = 5; // Number of cards to display
+        const totalBoxes = 4; // Number of boxes
+        let flippedCards = 0; // Track flipped cards
+
+        const shelf = document.getElementById("shelf");
+
+        // Populate the shelf dynamically
+        for (let id = 1; id <= totalBoxes; id++) {
+            const box = document.createElement("div");
+            box.className = "box";
+            const img = document.createElement("img");
+            img.src = `/image/${id}`;
+            img.alt = `Box ${id}`;
+            box.appendChild(img);
+
+            // Add click event for drawing cards
+            box.addEventListener("click", () => {
+                drawCards(id);
+                shelf.classList.add("hidden"); // Hide the shelf
+            });
+
+            shelf.appendChild(box);
+        }
+
+        // Function to draw cards from the server
+        async function drawCards(boxid) {
+            const container = document.getElementById("cardsContainer");
+            container.innerHTML = ""; // Clear previous cards
+            container.style.display = "flex"; // Show the container
+            flippedCards = 0; // Reset flipped cards counter
+
+            try {
+                const response = await fetch(`/draw/${boxid}`); // Fetch using the box number
+                if (!response.ok) {
+                    throw new Error("Failed to fetch cards");
+                }
+                const data = await response.json();
+				console.log(data);
+				if(data.msg != null){
+					alert(data.msg);
+					container.style.display = "none"; // Hide the cards container
+                    shelf.classList.remove("hidden"); // Show the shelf again
+					return;
+					}
+                const earning = data.earnings;
+				const cards = data.cardnum;
+				console.log(cards);
+				console.log(earning);
+				document.getElementById("earnings").innerHTML = "Your total money is $" + earning;
+                // Display the drawn cards
+                const centerX = container.offsetWidth / 2;
+                const centerY = container.offsetHeight / 2;
+                const radius = 300;
+                const angleStep = (2 * Math.PI) / cardsToShow;
+
+                data.cardnum.forEach((cardindex, i) => {
+                    const cardWrapper = document.createElement("div");
+                    cardWrapper.className = "card-wrapper";
+
+                    const cardInner = document.createElement("div");
+                    cardInner.className = "card-inner";
+
+                    const cardFront = document.createElement("div");
+                    cardFront.className = "card-front";
+                    const frontImg = document.createElement("img");
+                    frontImg.src =  `/image/${cardindex}`; // Use image URL from server response
+                    cardFront.appendChild(frontImg);
+
+                    const cardBack = document.createElement("div");
+                    cardBack.className = "card-back";
+                    const backImg = document.createElement("img");
+                    backImg.src = `/image/${boxid}`; // Back image based on the box
+                    cardBack.appendChild(backImg);
+
+                    // Combine card structure
+                    cardInner.appendChild(cardFront);
+                    cardInner.appendChild(cardBack);
+                    cardWrapper.appendChild(cardInner);
+
+                    // Calculate position in a star shape
+                    const angle = i * angleStep;
+                    const x = centerX + radius * Math.cos(angle) - 60; // Adjust for card wrapper size
+                    const y = centerY + radius * Math.sin(angle) - 90; // Adjust for card wrapper size
+                    cardWrapper.style.left = `${x}px`;
+                    cardWrapper.style.top = `${y}px`;
+
+                    // Add click event to flip the card
+                    cardInner.addEventListener("click", () => flipCard(cardInner));
+
+                    container.appendChild(cardWrapper);
+                });
+            } catch (error) {
+                console.error("Error drawing cards:", error);
+            }
+        }
+
+        // Flip the card
+        function flipCard(cardInner) {
+            if (!cardInner.classList.contains("flipped")) {
+                cardInner.classList.add("flipped");
+                flippedCards++;
+
+                // Check if all cards are flipped
+                if (flippedCards === cardsToShow) {
+                    setTimeout(() => {
+						quitdrawscreen()
+                    }, 1000);
+                }
+            }
+        }
+		function quitdrawscreen(){
+			const container = document.getElementById("cardsContainer");
+			container.style.display = "none"; 
+			shelf.classList.remove("hidden"); 
+		}
+		function goHome() {
+			window.location.href = "/";
+		}
+    </script>
+
+</body>
+</html>

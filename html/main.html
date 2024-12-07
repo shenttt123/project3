@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Welcome, {{username}}!</h1>
+    <h1>Thank you for playing Tong's Project 3 - Card Trading Game</h1>
+	<!-- ANNOUNCEMENT_PLACEHOLDER -->
+    <div class="button-container">
+        <a href="/earn-money" class="button earn-money">Earn Money</a>
+        <a href="/packages" class="button packages">Packages</a>
+        <a href="/online-trade" class="button online-trade">Online Trade</a>
+    </div>
+
+    <div class="shelf" id="cardShelf">
+    </div>
+    <a href="/logout">Log Out</a>
+    <h1></h1>
+    <script>
+        // Dynamically fetch username from the HTML content
+        const username = "{{username}}";
+
+        // Fetch user-owned cards from the backend
+        async function loadCards() {	
+            const shelf = document.getElementById('cardShelf');
+            try {
+                const response = await fetch(`/fetchusercard`); // Dynamic endpoint for user cards
+                if (!response.ok) {
+                    throw new Error('Failed to fetch cards');
+                }
+                const data = await response.json();
+				
+				cardset = data.cardset;
+				console.log(cardset);
+                
+				var cardcount = 0;
+                Object.entries(cardset).forEach(([cardId, count]) => {
+					cardcount += 1;
+					console.log(count);
+					
+					const cardDiv = document.createElement('div');
+	
+					if (count > 0) {
+						cardDiv.className = 'card';
+						const img = document.createElement('img');
+						var imgnum = parseInt(cardId) + 4;
+                        img.src = `/image/${imgnum}`;; // Use the image path from JSON
+                        img.alt = `Card ${cardId}`;
+						const countSpan = document.createElement('span');
+						countSpan.className = 'card-count'; 
+						countSpan.textContent = `x${count}`; 
+						cardDiv.appendChild(img);
+						cardDiv.appendChild(countSpan);
+					} else {
+						cardDiv.className = 'empty-slot';
+					}
+					document.getElementById('cardShelf').appendChild(cardDiv);
+				});
+            } catch (error) {
+                console.error('Error loading cards:', error);
+               
+                for (let i = 0; i < 20; i++) {
+                    const emptySlot = document.createElement('div');
+                    emptySlot.className = 'empty-slot';
+                    shelf.appendChild(emptySlot);
+                }
+            }
+        }
+
+        
+        document.addEventListener("DOMContentLoaded", () => {
+           loadCards();
+        });
+    </script>
+</body>
+</html>

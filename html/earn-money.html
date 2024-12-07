@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earn Money</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        #tile-container {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .tile {
+            width: 100px;
+            height: 100px;
+            background-color: gray;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .tile.active {
+            background-color: gold;
+        }
+
+        .tile.clicked {
+            background-color: green !important;
+        }
+		.announcement {
+			background-color: #f8f9fa;
+			padding: 10px;
+			border-radius: 4px;
+			margin-bottom: 20px;
+			font-size: 14px;
+			color: #333;
+			border: 1px solid #ddd;
+		}
+
+		.announcement a {
+			color: #007bff;
+			text-decoration: none;
+		}
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{gameusername}}!</h1>
+    <p>Click the flashing tiles to earn money!</p>
+	<!-- ANNOUNCEMENT_PLACEHOLDER -->
+    <div id="tile-container"></div>
+    <p id="earnings">Your current money is: ${{totalmoney}}</p>
+    <button onclick="goHome()">Back</button>
+<script>
+    const tileContainer = document.getElementById('tile-container');
+    const tiles = [];
+    const numTiles = 16;
+	var earning = 0;
+	const currentUrl = window.location.href;
+	const urlObj = new URL(currentUrl);
+	const currentHost = urlObj.hostname; 
+    const socket = new WebSocket(`ws://${currentHost}:5678`);
+
+    socket.onopen = () => {
+        console.log('WebSocket connection established.');
+		const gameusername = "{{gameusername}}"; 
+		const accountusername = "{{accountusername}}"; 
+		socket.send(JSON.stringify({ 
+			username: accountusername, 
+			type: "earnmoney" 
+		}));
+    };
+
+    socket.onmessage = (event) => {
+        console.log(event.data);
+        const data = JSON.parse(event.data);
+        earning = parseInt(data.earnings);
+        document.getElementById('earnings').innerText = "our current money is: $" + earning.toString();
+    };
+
+    socket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+		alert('ws error');
+    };
+
+    socket.onclose = () => {
+        console.log('WebSocket connection closed.');
+		alert('ws closed');
+    };
+
+    // Create tiles and add them to the container
+    for (let i = 0; i < numTiles; i++) {
+        const tile = document.createElement('div');
+        tile.id = "tile" + i;
+        tile.className = 'tile';
+        tile.dataset.worth = 0; // Initialize worth as 0
+        tile.addEventListener('click', () => {
+            if (tile.classList.contains('active')) {
+                const earning = 10 - parseInt(tile.dataset.worth, 10); // Convert worth to integer
+                sendTileClick(earning);
+                tile.classList.remove('active');
+				tile.classList.add('clicked');
+				setTimeout(() => {
+                    tile.classList.remove('clicked');
+                }, 300);
+            }
+        });
+
+        tiles.push(tile);
+        tileContainer.appendChild(tile);
+    }
+
+    function pickRandomNumbers() {
+        const availableNumbers = Array.from({ length: numTiles }, (_, i) => i);
+        const pickedNumbers = [];
+        const amountofnumbers = Math.floor(Math.random() * 6) + 1; // Randomize the number of tiles
+        while (pickedNumbers.length < amountofnumbers && availableNumbers.length > 0) {
+            // Pick a random index from availableNumbers
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            const selectedNumber = availableNumbers.splice(randomIndex, 1)[0];
+            pickedNumbers.push(selectedNumber);
+        }
+        return pickedNumbers;
+    }
+
+    function assignTileWorth(tile) {
+        const rand = Math.random();
+        tile.classList.add('active');
+        const currentWorth = parseInt(tile.dataset.worth, 10); // Ensure worth is treated as integer
+        if (rand < 0.3) {
+            tile.dataset.worth = Math.min(currentWorth + 3,10); // Increment worth
+        } else if (rand < 0.7) {
+            tile.dataset.worth = Math.min(currentWorth + 2,10)
+        } else {
+            tile.dataset.worth = Math.min(currentWorth + 1,10)
+        }
+    }
+
+    // Flash random tiles every second
+    setInterval(() => {
+        for (let i = 0; i < numTiles; i++) {
+            const currentTile = document.getElementById("tile" + i);
+            let worth = parseInt(currentTile.dataset.worth, 10); // Ensure worth is an integer
+            if (worth > 0) {
+                currentTile.dataset.worth = worth - 1; // Decrement worth
+            }
+            if (worth <= 1) {
+                currentTile.classList.remove('active'); // Remove active if worth is 0
+            }
+        }
+        const pickedNumbers = pickRandomNumbers();
+        for (let i = 0; i < pickedNumbers.length; i++) {
+            const newTile = document.getElementById("tile" + pickedNumbers[i]);
+            assignTileWorth(newTile);
+        }
+    }, 500);
+
+    // Send tile click to the server via WebSocket
+    function sendTileClick(earning) {
+        socket.send(earning);
+    }
+
+     function goHome() {
+        window.location.href = "/";
+     }
+</script>
+
+</body>
+</html>

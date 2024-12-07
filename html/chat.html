@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ccc;
+            margin: 20px;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            position: relative;
+        }
+
+        #back-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        #message-form {
+            display: flex;
+            margin: 20px;
+        }
+
+        #message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        #send-button,
+        #trade-button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        #send-button:hover,
+        #trade-button:hover {
+            background-color: #0056b3;
+        }
+
+        #trade-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+        }
+		
+		
+		.strade-button {
+			margin: 20px 0;
+			padding: 10px 20px;
+			background-color: #28a745;
+			color: white;
+			font-size: 16px;
+			font-weight: bold;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+			transition: background-color 0.3s ease, transform 0.2s ease;
+		}
+
+        #cardShelf {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card {
+            border: 1px solid #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .card img {
+            width: 100px;
+            height: auto;
+        }
+
+        .card-count {
+            display: block;
+            margin-top: 5px;
+        }
+
+        .close-trade {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+		
+		#cardShelf div {
+			margin-bottom: 20px; /* Space between cards */
+		}
+
+		.request-text {
+			margin-top: 20px; /* Space between sections */
+			font-weight: bold;
+		}
+    </style>
+</head>
+<body>
+     <button id="back-button" onclick="goHome()">Back</button>
+    <div id="chat-container">
+    </div>
+    <form id="message-form">
+        <input type="text" id="message-input" placeholder="Type your message here..." required>
+        <button id="send-button" type="submit">Send Text</button>
+        <button id="trade-button" type="button">Start a Trade</button>
+    </form>
+
+	<div id="trade-screen">
+		<button class="close-trade">Close</button>
+		<div id="cardShelf"></div>
+		<button class="strade-button" onclick="showtradecardsscreen()">Trade</button>
+	</div>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+        const tradeButton = document.getElementById('trade-button');
+        const tradeScreen = document.getElementById('trade-screen');
+        const closeTradeButton = document.querySelector('.close-trade');
+        const cardShelf = document.getElementById('cardShelf');
+
+        const currentUrl = window.location.href;
+        const urlObj = new URL(currentUrl);
+        const currentHost = urlObj.hostname;
+        const socket = new WebSocket(`ws://${currentHost}:5678`);
+		
+		var selectedGiveAwayCardIndex = -1;
+		var selectedRequestCardCardIndex = -1;
+		
+        socket.onopen = () => {
+            console.log('WebSocket connection established.');
+			const accountusername = "{{accountusername}}"; 
+			socket.send(JSON.stringify({ 
+				username: accountusername, 
+				type: "chat" 
+			}));
+        };
+
+        socket.onclose = () => {
+            console.log('WebSocket connection closed.');
+			alert("ws closed");
+			window.location.href = "/";
+        };
+
+		socket.onmessage = (event) => {
+			const data = JSON.parse(event.data);
+			console.log(data);
+
+			// Handle alert messages
+			if (data.alert != null) {
+				alert(data.alert);
+				return;
+			}
+
+			// Handle trade updates
+			if (data.type === "updatetrade") {
+				// Ensure tradeid is present
+				if (data.tradeid != null) {
+					const tradeElementId = `trade-container-${data.tradeid}`;
+					changetradedstatus(tradeElementId, data.tradeduser); // Update the traded status in real-time
+				} else {
+					console.error("Trade update received without tradeid.");
+				}
+				return;
+			}
+
+			// Handle adding general chat messages
+			addtochat(data);
+		};
+
+		
+		function addtochat(data){
+			if (data.type === "chatmsg") {
+                addMessageToChat(data);
+            } else if (data.type === "trade") {
+				addTradeToChat(data);
+            }
+		}
+		
+		
+        function addMessageToChat(data) {
+            let date = new Date(data.time * 1000);
+            var windowmsg = data.username + " said at " + date.toString() + ": " + data.message;
+            const div = document.createElement('div');
+            div.textContent = windowmsg;
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+		function addfirstmsg(){
+			const div = document.createElement('div');
+            div.textContent = "Global channel, please say something nice";
+			div.style.color = "green";
+            chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+		}
+		function addTradeToChat(data) {
+			// Create a container for the trade message
+			const tradeDiv = document.createElement('div');
+			tradeDiv.style.display = 'flex';
+			tradeDiv.style.alignItems = 'center';
+			tradeDiv.style.marginBottom = '10px';
+
+			// Add username text
+			const tradeText = document.createElement('span');
+			tradeText.textContent = `${data.username} is giving away `;
+			tradeText.style.marginRight = '10px';
+			tradeDiv.appendChild(tradeText);
+
+			// Add giveaway card image
+			const giveawayImg = document.createElement('img');
+			giveawayImg.src = `/image/${data.num[0] + 4}`;
+			giveawayImg.alt = `Card ${data.num[0] + 4}`;
+			giveawayImg.style.width = '50px';
+			giveawayImg.style.height = 'auto';
+			giveawayImg.style.marginRight = '10px';
+			tradeDiv.appendChild(giveawayImg);
+
+			// Add arrow text
+			const arrowText = document.createElement('span');
+			arrowText.textContent = ' ->> request ';
+			arrowText.style.marginRight = '10px';
+			tradeDiv.appendChild(arrowText);
+
+			// Add request card image
+			const requestImg = document.createElement('img');
+			requestImg.src = `/image/${data.num[1] + 4}`;
+			requestImg.alt = `Card ${data.num[1] + 4}`;
+			requestImg.style.width = '50px';
+			requestImg.style.height = 'auto';
+			tradeDiv.appendChild(requestImg);
+
+			// Create container for button and acknowledgment
+			const tradeContainer = document.createElement('div');
+			tradeContainer.id = `trade-container-${data.tradeid}`; // Assign unique ID
+			tradeContainer.style.display = 'flex';
+			tradeContainer.style.alignItems = 'center';
+			tradeContainer.style.marginLeft = '10px';
+
+			// Add trade button
+			const tradeButton = document.createElement('button');
+			tradeButton.textContent = 'Trade';
+			tradeButton.style.padding = '5px 10px';
+			tradeButton.style.backgroundColor = '#007bff';
+			tradeButton.style.color = 'white';
+			tradeButton.style.border = 'none';
+			tradeButton.style.borderRadius = '5px';
+			tradeButton.style.cursor = 'pointer';
+
+			// Add acknowledgment message
+			const tradedAck = document.createElement('div');
+			tradedAck.style.marginLeft = '10px';
+			tradedAck.style.color = '#28a745'; // Green text for success
+			tradedAck.textContent = `Traded with ${data.traded}`;
+			tradedAck.style.display = data.traded === 0 ? 'none' : 'block'; // Hide if not traded
+
+			// Update button state based on traded status
+			if (data.traded !== 0) {
+				tradeButton.disabled = true; // Disable button
+				tradeButton.style.backgroundColor = '#6c757d'; // Change color to indicate disabled
+				tradeButton.style.cursor = 'not-allowed';
+			}
+
+			tradeButton.addEventListener('click', () => accept_trade(tradeContainer.id));
+
+			// Add button and acknowledgment to the container
+			tradeContainer.appendChild(tradeButton);
+			tradeContainer.appendChild(tradedAck);
+
+			// Add trade message and container to the chat
+			tradeDiv.appendChild(tradeContainer);
+			chatContainer.appendChild(tradeDiv);
+			chatContainer.scrollTop = chatContainer.scrollHeight;
+		}
+
+		// Example changetradedstatus function
+		function changetradedstatus(tradeElementId, tradeUsername) {
+			const tradeContainer = document.getElementById(tradeElementId);
+			if (tradeContainer) {
+				const tradeButton = tradeContainer.querySelector('button');
+				const tradedAck = tradeContainer.querySelector('div');
+
+				// Update traded status
+				tradeButton.disabled = true;
+				tradeButton.style.backgroundColor = '#6c757d';
+				tradeButton.style.cursor = 'not-allowed';
+				tradedAck.textContent = `Traded with ${tradeUsername}`;
+				tradedAck.style.display = 'block'; // Show acknowledgment
+			} else {
+				console.error(`Trade container with ID ${tradeElementId} not found.`);
+			}
+		}
+
+        async function load_chat_history() {
+			addfirstmsg();
+            const response = await fetch(`/loadchat`);
+            if (!response.ok) {
+                throw new Error("Failed to fetch chat history");
+            }
+            const data = await response.json();
+            data.msg.forEach((object) => addtochat(object));
+        }
+
+		async function loadCards() {
+			try {
+				const response = await fetch(`/fetchusercard`);
+				if (!response.ok) {
+					throw new Error('Failed to fetch cards');
+				}
+				const data = await response.json();
+				cardShelf.innerHTML = ''; // Clear existing cards
+
+				// Add text instructions
+				const giveAwayText = document.createElement('div');
+				giveAwayText.textContent = "Pick a card you will give away:";
+				giveAwayText.style.margin = "10px 0";
+				giveAwayText.style.fontWeight = "bold";
+				cardShelf.appendChild(giveAwayText);
+
+				// Variables to track selected cards
+				let selectedGiveAwayCard = null;
+				let selectedRequestCard = null;
+					
+				// Helper function to handle card selection
+				function handleCardClick(cardElement, type) {
+					if (type === "giveaway") {
+						// Remove green border from previously selected card
+						if (selectedGiveAwayCard) {
+							selectedGiveAwayCard.style.border = "none";
+						}
+						// Set the newly clicked card as selected
+						selectedGiveAwayCard = cardElement;
+						selectedGiveAwayCardIndex = selectedGiveAwayCard.querySelector('img').alt.split(' ')[1];
+					} else if (type === "request") {
+						// Remove green border from previously selected card
+						if (selectedRequestCard) {
+							selectedRequestCard.style.border = "none";
+						}
+						// Set the newly clicked card as selected
+						selectedRequestCard = cardElement;
+						selectedRequestCardIndex = selectedRequestCard.querySelector('img').alt.split(' ')[1];
+					}
+					// Add green border to the selected card
+					cardElement.style.border = "5px solid green";
+				}
+
+				// Render give away cards
+				Object.entries(data.cardset).forEach(([cardId, count]) => {
+					if (count > 0) {
+						const cardDiv = document.createElement('div');
+						cardDiv.className = 'card';
+
+						const img = document.createElement('img');
+						const imgnum = parseInt(cardId) + 4;
+						img.src = `/image/${imgnum}`;
+						img.alt = `Card ${cardId}`;
+
+						const countSpan = document.createElement('span');
+						countSpan.className = 'card-count';
+						countSpan.textContent = `x${count}`;
+
+						cardDiv.appendChild(img);
+						cardDiv.appendChild(countSpan);
+						cardShelf.appendChild(cardDiv);
+
+						// Add click event for selecting a card to give away
+						cardDiv.addEventListener('click', () => handleCardClick(cardDiv, "giveaway"));
+					}
+				});
+
+				// Fill remaining slots with empty placeholders to reach 20 cards
+				const currentCount = Object.keys(data.cardset).length;
+				for (let i = currentCount; i < 20; i++) {
+					const emptySlot = document.createElement('div');
+					emptySlot.className = 'empty-slot';
+					emptySlot.textContent = 'Empty';
+					cardShelf.appendChild(emptySlot);
+				}
+
+				// Add text instructions for requested card
+				const requestCardText = document.createElement('div');
+				requestCardText.textContent = "Pick a card you request:";
+				requestCardText.style.marginTop = "20px"; // Adds space between sections
+				requestCardText.style.fontWeight = "bold";
+				cardShelf.appendChild(requestCardText);
+
+				// Render request cards
+				for (let i = 0; i < 20; i++) {
+					const requestCardSlot = document.createElement('div');
+					requestCardSlot.className = 'card';
+
+					const img = document.createElement('img');
+					img.src = `/image/${i + 5}`; // Placeholder for requested card images
+					img.alt = `Card ${i + 1}`;
+
+					requestCardSlot.appendChild(img);
+					cardShelf.appendChild(requestCardSlot);
+
+					// Add click event for selecting a card to request
+					requestCardSlot.addEventListener('click', () => handleCardClick(requestCardSlot, "request"));
+				}
+			} catch (error) {
+				console.error('Error loading cards:', error);
+				cardShelf.innerHTML = '<div style="color: red;">Failed to load cards. Please try again later.</div>';
+			}
+		}
+		
+		function showtradecardsscreen(){
+			console.log(selectedGiveAwayCardIndex);
+			console.log(selectedRequestCardIndex);
+			if(selectedGiveAwayCardIndex == -1 || selectedRequestCardIndex == -1){
+				alert('please select two card to give and take');
+				return;
+			}
+			if(selectedGiveAwayCardIndex == selectedRequestCardIndex){
+				alert("Can't trade the same card");
+				return;
+			}
+			socket.send(JSON.stringify({ type: "trade", num: [selectedGiveAwayCardIndex, selectedRequestCardIndex] }));
+			
+			tradeScreen.style.display = 'none';
+		}
+		
+		function accept_trade(containerId) {
+			const tradeContainer = document.getElementById(containerId);
+			if (!tradeContainer) {
+				console.error(`Trade container with ID ${containerId} not found.`);
+				return;
+			}
+
+			// Retrieve the trade ID from the container's ID
+			const tradeId = containerId.split('-').pop(); // Extract trade ID from 'trade-container-<tradeId>'
+			if (!tradeId) {
+				console.error("Trade ID is invalid or not found.");
+				return;
+			}
+
+			// Confirm the trade acceptance
+			const userConfirmed = confirm("Are you sure you want to accept this trade?");
+			if (userConfirmed) {
+				const tradeInfoToSend = JSON.stringify({
+					type: "accept_trade",
+					tradeid: tradeId
+				});
+				console.log(`Sending trade acceptance: ${tradeInfoToSend}`);
+
+				// Send the trade acceptance to the server
+				socket.send(tradeInfoToSend);
+			} else {
+				console.log("Trade canceled by user.");
+			}
+		}
+
+
+
+        function goHome() {
+			window.location.href = "/";
+		}
+
+        tradeButton.addEventListener('click', () => {
+            tradeScreen.style.display = 'flex';
+            loadCards();
+        });
+
+        closeTradeButton.addEventListener('click', () => {
+            tradeScreen.style.display = 'none';
+        });
+
+        messageForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const message = messageInput.value;
+            socket.send(JSON.stringify({ type: "chatmsg", message }));
+            messageInput.value = "";
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            load_chat_history();
+        });
+    </script>
+</body>
+</html>

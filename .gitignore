@@ -1,0 +1,4 @@
+.idea/
+__pycache__/
+user.json
+chat_log.json
