@@ -6,7 +6,7 @@ from aiohttp import web
 from chatserver import *
 from globalname import *
 
-demomode = 0
+demomode = 1
 sessions = {}# Dictionary to store active sessions
 # Server configuration
 HOST = "0.0.0.0"
