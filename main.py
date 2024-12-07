@@ -19,7 +19,7 @@ box_data = {
     3: [7,11,15,19,23],
     4: [8,12,16,20,24]
 }
-probabilities = [0.6,0.2,0.19,0.009,0.001]
+probabilities = [0.6,0.25,0.14,0.009,0.001]
 
 # Function to get the image name based on ID
 def getimagename(idstr):
@@ -160,7 +160,7 @@ async def handle_home(request):
         if(demomode == 1):
             announcement_html = """
             <div class="announcement"> <label for="announcement">Demo Mode:</label> 
-            <textarea id="announcement" rows="4" disabled>username: admin
+            <textarea id="announcement" rows="4" disabled>god account:\r\nusername: admin
             \r\npassword: tufts</textarea> <br> <a href="https://github.com/shenttt123/project3" target="_blank">
             For Soucre Code, please this link </a> </div>
             """
@@ -275,8 +275,8 @@ async def handle_package(request):
         <textarea id="announcement" rows="16" disabled>
         normal probabilities:
          free 60%
-         common 20%
-         rare 19%
+         common 25%
+         rare 14%
          epic 0.9%
          legendary 0.1%
          
