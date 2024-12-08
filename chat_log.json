@@ -184,6 +184,97 @@
             "type": "updatetrade",
             "tradeid": 9,
             "tradeduser": "game god"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733604854.646153,
+            "message": "24.147.249.5:8888"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733606388.789073,
+            "message": "Helllo"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733606396.087398,
+            "message": "\ud83d\ude42\ud83d\ude19\ud83e\udd70\ud83d\ude17\ud83e\udd70\ud83d\ude17\ud83e\udd72\ud83d\ude17\ud83e\udd28\ud83d\ude18\ud83e\udd11\ud83e\udd2b\ud83d\ude1a\ud83e\udd2a\ud83d\ude19\ud83e\udd28\ud83e\udd14"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733606412.398376,
+            "message": "13ewq"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733629643.22006,
+            "message": "Hello"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733629652.962728,
+            "message": "12345566"
+        },
+        {
+            "type": "chatmsg",
+            "username": "yasuo",
+            "time": 1733629672.545568,
+            "message": "\ud83d\ude18\ud83d\ude19\ud83e\udd2b\ud83d\ude19\ud83e\udd2a\ud83e\udd72\ud83d\ude0b\ud83d\ude1c\ud83e\udd72\ud83e\udd17\ud83d\ude1c\ud83e\udd11\ud83e\udd11\ud83d\ude1b\ud83e\udd2b"
+        },
+        {
+            "type": "trade",
+            "tradeid": 14,
+            "username": "yasuo",
+            "time": 1733629686.609275,
+            "traded": 0,
+            "num": [
+                1,
+                13
+            ]
+        },
+        {
+            "type": "chatmsg",
+            "username": "newuser",
+            "time": 1733630350.812961,
+            "message": "Hello can you trade with me?"
+        },
+        {
+            "type": "trade",
+            "tradeid": 15,
+            "username": "newuser",
+            "time": 1733630363.612238,
+            "traded": "yasuo",
+            "num": [
+                1,
+                14
+            ]
+        },
+        {
+            "type": "updatetrade",
+            "tradeid": 15,
+            "tradeduser": "yasuo"
+        },
+        {
+            "type": "trade",
+            "tradeid": 16,
+            "username": "newuser",
+            "time": 1733630473.816082,
+            "traded": "yasuo",
+            "num": [
+                2,
+                7
+            ]
+        },
+        {
+            "type": "updatetrade",
+            "tradeid": 16,
+            "tradeduser": "yasuo"
         }
     ]
 }

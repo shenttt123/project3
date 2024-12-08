@@ -58,6 +58,9 @@ async def handlechatmsg(username, jsonmsg, client):
                 newmessage = {"alert": "Trade success"}
                 await client.send(json.dumps(newmessage))
                 newmessage = {"type": "updatetrade", "tradeid": currenttradeid, "tradeduser": gamenamelist[username]}#broadcast this msg later on in real time
+                for client in connected_ws_clients:#don't need to save this msg in chat.json
+                    await client.send(json.dumps(newmessage))
+                return
             else:
                 newmessage = {"alert": tradedetails['username'] + "no longer have that card!"}
                 await client.send(json.dumps(newmessage))
