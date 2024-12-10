@@ -124,6 +124,13 @@
             margin-top: 5px;
         }
 
+       .chatcard:hover {
+            transform: scale(10); /* Resizes the card visually without affecting layout */
+            width: 100px; /* Make the card square on hover */
+            height: 100px; /* Match width to ensure square shape */
+            z-index: 10; /* Brings the card to the top of other elements */
+        }
+
         .close-trade {
             position: absolute;
             top: 20px;
@@ -135,7 +142,8 @@
             padding: 10px;
             cursor: pointer;
         }
-		
+
+
 		#cardShelf div {
 			margin-bottom: 20px; /* Space between cards */
 		}
@@ -260,6 +268,7 @@
 
 			// Add giveaway card image
 			const giveawayImg = document.createElement('img');
+			giveawayImg.className = 'chatcard';
 			giveawayImg.src = `/image/${data.num[0] + 4}`;
 			giveawayImg.alt = `Card ${data.num[0] + 4}`;
 			giveawayImg.style.width = '50px';
@@ -275,6 +284,7 @@
 
 			// Add request card image
 			const requestImg = document.createElement('img');
+			requestImg.className = 'chatcard';
 			requestImg.src = `/image/${data.num[1] + 4}`;
 			requestImg.alt = `Card ${data.num[1] + 4}`;
 			requestImg.style.width = '50px';

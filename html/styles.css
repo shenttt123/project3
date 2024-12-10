@@ -61,10 +61,10 @@ h1 {
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
     display: grid;
     grid-template-columns: repeat(5, 1fr); /* 5 columns */
-    gap: 15px;
+    gap: 0px;
     justify-items: center;
     align-items: center;
-    margin: 40px auto;
+    margin: 10px auto;
     max-width: 800px; /* Limit shelf width */
 }
 
@@ -74,7 +74,7 @@ h1 {
     width: 100px; /* Initial rectangle width */
     height: 150px; /* Initial rectangle height */
     margin: 10px;
-    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out;
+    transition: transform 0.5s ease-in-out, width 0.5s ease-in-out, height 0.5s ease-in-out;
     border: 2px solid white;
     border-radius: 10px;
     overflow: hidden; /* Ensure content stays within the card */
@@ -82,10 +82,9 @@ h1 {
 
 .card:hover {
     transform: scale(3); /* Resizes the card visually without affecting layout */
-    width: 150px; /* Make the card square on hover */
-    height: 150px; /* Match width to ensure square shape */
+    width: 100px; /* Make the card square on hover */
+    height: 100px; /* Match width to ensure square shape */
     z-index: 10; /* Brings the card to the top of other elements */
-    border-radius: 0; /* Optional: Remove rounded corners */
 }
 
 .card img {
@@ -94,7 +93,6 @@ h1 {
     object-fit: cover; /* Ensures the image fills the card properly */
     border-radius: 5px; /* Optional rounded corners */
 }
-
 
 
 .card-count {
